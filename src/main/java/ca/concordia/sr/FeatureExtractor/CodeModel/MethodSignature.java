@@ -1,5 +1,6 @@
 package ca.concordia.sr.FeatureExtractor.CodeModel;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class MethodSignature {
@@ -7,7 +8,7 @@ public class MethodSignature {
 	private String visibility;
 	private String returnType;
 	private boolean _abstract;
-	private List<String[]> parameters;
+	private List<String[]> parameters = new ArrayList<String[]>();
 	public final String getName() {
 		return name;
 	}
@@ -36,7 +37,7 @@ public class MethodSignature {
 		for(String parameter : parameters) {
 			String varName = parameter.substring(0, parameter.indexOf(' '));
 			String varType = parameter.substring(parameter.indexOf(' ') + 1);
-			this.parameters.add(new String[] {varName, varType});
+			this.parameters.add(new String[]{varName, varType});
 		}
 	}
 }

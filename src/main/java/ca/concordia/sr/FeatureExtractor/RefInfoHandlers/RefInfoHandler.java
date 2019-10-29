@@ -15,7 +15,7 @@ import org.json.JSONObject;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-
+import com.github.javaparser.ast.body.MethodDeclaration;
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
 
@@ -36,6 +36,7 @@ public class RefInfoHandler {
 	protected String originalClassNameWithPkg;
 	protected CompilationUnit originalClassAST;
 	private REF_TYPE type;
+	private MethodSignature methodSignature;
 	
 	public final JSONObject getjObj() {
 		return jObj;
@@ -99,19 +100,16 @@ public class RefInfoHandler {
 		this.computeAllPaths();
 		this.originalClassNameWithPkg = this.getjObj().getString(this.getClassBeforeKey());
 		this.parseOriginalFile();
+		this.getOperatedMethod();
 	}
 	
-	public MethodSignature getOperatedMethod() {
+	public void getOperatedMethod() {
 		JSONObject jObj = this.getjObj().getJSONObject(this.getMethodBeforeKey());
 		List<String> parameters = new ArrayList<String>();
 		for(Object p : jObj.getJSONArray("parameters")) {
 			parameters.add((String)p);
 		}
-		return new MethodSignature(jObj.getString("name"), jObj.getString("visibility"), jObj.getString("returnType"), jObj.getBoolean("abstract"), parameters);
-	}
-	
-	public void handle() {
-		
+		this.methodSignature = new MethodSignature(jObj.getString("name"), jObj.getString("visibility"), jObj.getString("return type"), jObj.getBoolean("abstract"), parameters);
 	}
 	
 	private void computeAllPaths() {
@@ -140,5 +138,13 @@ public class RefInfoHandler {
 			}
 		}
 		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.originalFile.getAbsolutePath());
+	}
+	
+	public void handle() {
+		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
+			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
+				System.out.println(node);
+			}
+		}
 	}
 }
