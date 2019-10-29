@@ -27,11 +27,6 @@ public class App
     	for (File refType : refInfos.listFiles()) {
     		for (File project : refType.listFiles()) {
     			for (File refactoring : project.listFiles()) {
-    				if (refType.getName().equals("Extract_Method")) {
-    					
-    				} else {
-    					continue;
-    				}
 					try {
 						RefInfoHandler handler = null;
 						if (refType.getName().equals("Extract_Method")) {
