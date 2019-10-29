@@ -5,7 +5,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.json.JSONArray;
@@ -15,8 +17,17 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 
 import ca.concordia.sr.FeatureExtractor.App;
+import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
 
-public abstract class RefInfoHandler {
+public class RefInfoHandler {
+	public enum REF_TYPE {
+		EXTRACT_METHOD,
+		EXTRACT_AND_MOVE_METHOD,
+		MOVE_METHOD,
+		EXTRACT_VARIABLE,
+		INLINE_VARIABLE
+	}
+	
 	private File originalFile;
 	private JSONObject jObj;
 	private String projectName;
@@ -24,6 +35,7 @@ public abstract class RefInfoHandler {
 	private String commitId;
 	protected String originalClassNameWithPkg;
 	protected CompilationUnit originalClassAST;
+	private REF_TYPE type;
 	
 	public final JSONObject getjObj() {
 		return jObj;
@@ -35,8 +47,44 @@ public abstract class RefInfoHandler {
 		return commitId;
 	}
 	
-	public RefInfoHandler (File refactoring, String projectName) throws FileNotFoundException {
+	private String getMethodBeforeKey() {
+		String key = null;
+		switch (this.type) {
+		case EXTRACT_METHOD:
+		case EXTRACT_AND_MOVE_METHOD:
+			key = "from method";
+			break;
+		case MOVE_METHOD:
+			key = "original method";
+			break;
+		case EXTRACT_VARIABLE:
+		case INLINE_VARIABLE:
+			key = "method";
+			break;
+		}
+		return key;
+	}
+	
+	private String getClassBeforeKey() {
+		String key = null;
+		switch (this.type) {
+		case EXTRACT_METHOD:
+		case EXTRACT_AND_MOVE_METHOD:
+		case MOVE_METHOD:
+			key = "original class";
+			break;
+		case EXTRACT_VARIABLE:
+		case INLINE_VARIABLE:
+			key = "class";
+			break;
+		}
+		return key;
+	}
+	
+	public RefInfoHandler (File refactoring, String projectName, REF_TYPE refType) throws FileNotFoundException {
 		this.originalFile = refactoring;
+		this.projectName = projectName;
+		this.type = refType;
 		FileReader reader = new FileReader(refactoring);
 		BufferedReader bReader = new BufferedReader(reader, 10240);
 		try {
@@ -46,13 +94,25 @@ public abstract class RefInfoHandler {
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Read file error: " + refactoring.getAbsolutePath() + " " + refactoring.getName());
-		} 
-		this.projectName = projectName;
-		this.computeAllPaths();
-		this.readOriginalClassFile();
+		}
 		this.commitId = jObj.getString("commitId");
+		this.computeAllPaths();
+		this.originalClassNameWithPkg = this.getjObj().getString(this.getClassBeforeKey());
+		this.parseOriginalFile();
 	}
-	public abstract void handle();
+	
+	public MethodSignature getOperatedMethod() {
+		JSONObject jObj = this.getjObj().getJSONObject(this.getMethodBeforeKey());
+		List<String> parameters = new ArrayList<String>();
+		for(Object p : jObj.getJSONArray("parameters")) {
+			parameters.add((String)p);
+		}
+		return new MethodSignature(jObj.getString("name"), jObj.getString("visibility"), jObj.getString("returnType"), jObj.getBoolean("abstract"), parameters);
+	}
+	
+	public void handle() {
+		
+	}
 	
 	private void computeAllPaths() {
 		JSONArray originalCodeElements = jObj.getJSONArray("leftSideLocations");
@@ -61,7 +121,7 @@ public abstract class RefInfoHandler {
 		}
 	}
 	
-	private void readOriginalClassFile() {
+	protected void parseOriginalFile() {
 		String matchedFilePath = this.matchFilePath(this.originalClassNameWithPkg);
 		String originalFilePath = App.getDataRoot() + "src_code/before/" + this.getCommitId() + "/" + matchedFilePath;
 		File originalFile = new File(originalFilePath);
