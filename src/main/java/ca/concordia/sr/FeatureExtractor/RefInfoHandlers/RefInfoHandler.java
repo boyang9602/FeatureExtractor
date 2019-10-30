@@ -177,7 +177,7 @@ public class RefInfoHandler {
 					continue;
 				}
 				if (parameters.equals(this.methodSignature.getParameters())) {
-					AbstractMethodVisitor amv = new AbstractMethodVisitor();
+					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
 					amv.visitPreOrder(node);
 					amv.onFinish();
 				}
