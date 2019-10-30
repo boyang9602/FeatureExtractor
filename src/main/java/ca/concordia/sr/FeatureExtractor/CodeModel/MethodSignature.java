@@ -37,7 +37,7 @@ public class MethodSignature {
 		for(String parameter : parameters) {
 			String varName = parameter.substring(0, parameter.indexOf(' '));
 			String varType = parameter.substring(parameter.indexOf(' ') + 1);
-			this.parameters.add(new String[]{varName, varType});
+			this.parameters.add(new String[]{varType, varName});
 		}
 	}
 }

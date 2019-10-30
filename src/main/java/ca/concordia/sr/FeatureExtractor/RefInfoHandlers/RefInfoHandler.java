@@ -7,10 +7,12 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import com.github.javaparser.StaticJavaParser;
@@ -108,12 +110,22 @@ public class RefInfoHandler {
 	}
 	
 	public void getOperatedMethod() {
-		JSONObject jObj = this.getjObj().getJSONObject(this.getMethodBeforeKey());
+		JSONObject methodSigJObj = this.getjObj().getJSONObject(this.getMethodBeforeKey());
 		List<String> parameters = new ArrayList<String>();
-		for(Object p : jObj.getJSONArray("parameters")) {
+		for(Object p : methodSigJObj.getJSONArray("parameters")) {
 			parameters.add((String)p);
 		}
-		this.methodSignature = new MethodSignature(jObj.getString("name"), jObj.getString("visibility"), jObj.getString("return type"), jObj.getBoolean("abstract"), parameters);
+		String methodName = methodSigJObj.getString("name");
+		String methodVisibility = methodSigJObj.getString("visibility");
+		boolean isAbstract = methodSigJObj.getBoolean("abstract");
+		String methodReturnType = "Unknow";
+		try {
+			methodReturnType = methodSigJObj.getString("return type");
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		this.methodSignature = new MethodSignature(methodName, methodVisibility, 
+				methodReturnType, isAbstract, parameters);
 	}
 	
 	private void computeAllPaths() {
@@ -136,8 +148,18 @@ public class RefInfoHandler {
 	}
 	
 	public String matchFilePath(final String classNameWithPkg) {
+		if (paths.size() == 1) {
+			return paths.iterator().next();
+		}
 		for(String path : paths) {
 			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(classNameWithPkg)) {
+				return path;
+			}
+		}
+		
+		// for inner class
+		for(String path : paths) {
+			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(classNameWithPkg.substring(0, classNameWithPkg.lastIndexOf('.')))) {
 				return path;
 			}
 		}
@@ -148,11 +170,34 @@ public class RefInfoHandler {
 		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
 				NodeList<Parameter> parameters = node.getParameters();
+				if (this.methodSignature.getParameters().size() != parameters.size()) {
+					continue;
+				}
+				if (!isEqual(this.methodSignature.getParameters(), parameters)) {
+					continue;
+				}
 				if (parameters.equals(this.methodSignature.getParameters())) {
 					AbstractMethodVisitor amv = new AbstractMethodVisitor();
 					amv.visitPreOrder(node);
+					amv.onFinish();
 				}
 			}
 		}
+	}
+	
+	private boolean isEqual(List<String[]> pl1, NodeList<Parameter> pl2) {
+		if(pl1.size() == 0) {
+			return true;
+		}
+		Iterator<String[]> i1 = pl1.iterator();
+		Iterator<Parameter> i2 = pl2.iterator();
+		while(i1.hasNext()) {
+			String[] p1 = i1.next();
+			Parameter p2 = i2.next();
+			if (!p1[0].replaceAll("\\s", "").equals(p2.getType().toString().replaceAll("\\s", ""))) {
+				return false;
+			}
+		}
+		return true;
 	}
 }
