@@ -15,9 +15,13 @@ import org.json.JSONObject;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.MethodDeclaration;
+import com.github.javaparser.ast.body.Parameter;
+
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
+import ca.concordia.sr.FeatureExtractor.Visitor.AbstractMethodVisitor;
 
 public class RefInfoHandler {
 	public enum REF_TYPE {
@@ -143,7 +147,11 @@ public class RefInfoHandler {
 	public void handle() {
 		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
-				System.out.println(node);
+				NodeList<Parameter> parameters = node.getParameters();
+				if (parameters.equals(this.methodSignature.getParameters())) {
+					AbstractMethodVisitor amv = new AbstractMethodVisitor();
+					amv.visitPreOrder(node);
+				}
 			}
 		}
 	}
