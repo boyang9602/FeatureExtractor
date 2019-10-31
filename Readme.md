@@ -4,7 +4,5 @@ Extract code features from source code files. Need to specify data root path for
 Currently it is a basic framework. In the RefInfoHandler's instance, you can get the source class content, which is the whole class's content in String.   
 dependency management uses maven
 
-#### TODOs:  
-1. specify what features are needed.  
-2. specify data format for code feature.  
-3. write a visitor to extract the code feature.  
+Some useless information like visibility, method name, etc., is ignored. The granularity is tunable.  
+[Sample data](./EXTRACT_METHOD)
