@@ -235,8 +235,8 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		return list.size() - 1;
 	}
 	
-	public void onFinish() throws IOException {
-		FileWriter writer = new FileWriter("data/tokenized_method.csv", true);
+	public void onFinish(String path) throws IOException {
+		FileWriter writer = new FileWriter(path, true);
 		StringBuilder sb = new StringBuilder();
 		for (String token : this.methodTokens) {
 			sb.append(token).append(",");

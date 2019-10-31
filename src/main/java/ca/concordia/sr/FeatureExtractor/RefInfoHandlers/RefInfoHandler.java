@@ -175,10 +175,13 @@ public class RefInfoHandler {
 				if (!isEqual(this.methodSignature.getParameters(), parameters)) {
 					continue;
 				}
+				if (!this.methodSignature.is_abstract() && node.getBody().toString().equals("Optional.empty")) {
+					continue;
+				}
 				if (parameters.equals(this.methodSignature.getParameters())) {
 					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
 					amv.visitPreOrder(node);
-					amv.onFinish();
+					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
 				}
 			}
 		}
