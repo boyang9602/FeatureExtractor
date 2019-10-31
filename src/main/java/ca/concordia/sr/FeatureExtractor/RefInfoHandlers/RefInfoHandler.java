@@ -122,7 +122,6 @@ public class RefInfoHandler {
 		try {
 			methodReturnType = methodSigJObj.getString("return type");
 		} catch (JSONException e) {
-			e.printStackTrace();
 		}
 		this.methodSignature = new MethodSignature(methodName, methodVisibility, 
 				methodReturnType, isAbstract, parameters);
