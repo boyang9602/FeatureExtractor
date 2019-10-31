@@ -274,6 +274,11 @@ public class RefInfoHandler {
 			Parameter p2 = i2.next();
 			String p1Type = p1[0].replaceAll("\\s", "").replaceAll("\\.\\.\\.", "");// String..., java parser does not include the ...
 			String p2Type = p2.getTypeAsString().replaceAll("\\s", "");
+
+			if (p1Type.equals(p2Type)) {
+				continue;
+			}
+			
 			int dotIndex = p2Type.lastIndexOf('.');
 			if(dotIndex != -1) {
 				p2Type = p2Type.substring(dotIndex + 1);
