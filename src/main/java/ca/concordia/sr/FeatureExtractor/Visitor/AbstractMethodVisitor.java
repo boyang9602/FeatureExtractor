@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Stack;
 
 import com.github.javaparser.ast.Node;
+import com.github.javaparser.ast.body.CallableDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 import com.github.javaparser.ast.body.VariableDeclarator;
@@ -20,7 +21,7 @@ import com.github.javaparser.ast.visitor.TreeVisitor;
 
 // Abstract is a verb here
 public class AbstractMethodVisitor extends TreeVisitor {
-	private final MethodDeclaration originalNode;
+	private final CallableDeclaration originalNode;
 	List<String> paramList = new ArrayList<String>();
 	List<String> localList = new ArrayList<String>();
 	List<String> fieldList = new ArrayList<String>();
@@ -41,7 +42,7 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	private int returnCount = 0;
 	private int localClassCount = 0;
 	
-	public AbstractMethodVisitor(final MethodDeclaration node) {
+	public AbstractMethodVisitor(final CallableDeclaration node) {
 		this.originalNode = node;
 	}
 

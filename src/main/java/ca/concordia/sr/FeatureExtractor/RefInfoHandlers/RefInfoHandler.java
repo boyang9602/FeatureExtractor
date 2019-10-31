@@ -20,6 +20,7 @@ import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 
@@ -162,13 +163,16 @@ public class RefInfoHandler {
 	}
 	
 	public String matchFilePath(final String classNameWithPkg) throws RuntimeException {
-		if (paths.size() == 1) {
-			return paths.iterator().next();
-		}
 		
 		if (this.type == REF_TYPE.EXTRACT_VARIABLE) {
+			if (rightSidePaths.size() == 1) {
+				return rightSidePaths.iterator().next();
+			}
 			return matchFilePath(classNameWithPkg, rightSidePaths);
 		} else {
+			if (paths.size() == 1) {
+				return paths.iterator().next();
+			}
 			return matchFilePath(classNameWithPkg, paths);
 		}
 	}
@@ -199,6 +203,40 @@ public class RefInfoHandler {
 	}
 	
 	public void handle() throws IOException {
+		boolean result = handleNormalMethod() || handleConstructor();
+		if (!result) {
+			System.out.println(this.originalFile.getAbsolutePath() + " did not match the method");
+		}
+	}
+	
+	private boolean handleConstructor() throws IOException {
+		for(ConstructorDeclaration node : this.originalClassAST.findAll(ConstructorDeclaration.class)) {
+			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
+				NodeList<Parameter> parameters = node.getParameters();
+				if (this.methodSignature.getParameters().size() != parameters.size()) {
+					continue;
+				}
+				if (!isEqual(this.methodSignature.getParameters(), parameters)) {
+					continue;
+				}
+				Range range = node.getRange().get();
+				if (!this.methodSignature.isRangeIncludedOrIntersectted(range.begin.line, range.end.line)) {
+					continue;
+				}
+				AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
+				amv.visitPreOrder(node);
+				try {
+					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
+					return true;
+				} catch (RuntimeException e) {
+					System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
+				}
+			}
+		}
+		return false;
+	}
+	
+	private boolean handleNormalMethod() throws IOException {
 		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
 				NodeList<Parameter> parameters = node.getParameters();
@@ -212,17 +250,17 @@ public class RefInfoHandler {
 				if (!this.methodSignature.isRangeIncludedOrIntersectted(range.begin.line, range.end.line)) {
 					continue;
 				}
-				if (parameters.equals(this.methodSignature.getParameters())) {
-					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
-					amv.visitPreOrder(node);
-					try {
-						amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
-					} catch (RuntimeException e) {
-						System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
-					}
+				AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
+				amv.visitPreOrder(node);
+				try {
+					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
+					return true;
+				} catch (RuntimeException e) {
+					System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
 				}
 			}
 		}
+		return false;
 	}
 	
 	private boolean isEqual(List<String[]> pl1, NodeList<Parameter> pl2) {
@@ -234,8 +272,19 @@ public class RefInfoHandler {
 		while(i1.hasNext()) {
 			String[] p1 = i1.next();
 			Parameter p2 = i2.next();
-			if (!p1[0].replaceAll("\\s", "").equals(p2.getType().toString().replaceAll("\\s", ""))) {
-				return false;
+			String p1Type = p1[0].replaceAll("\\s", "");
+			String p2Type = p2.getTypeAsString().replaceAll("\\s", "");
+			
+			if (!p1Type.equals(p2Type)) {
+				// String..., java parser does not include the ...
+				int dotsIndex = p1Type.lastIndexOf("...");
+				if (dotsIndex != -1) {
+					if (!p1Type.substring(0, dotsIndex).equals(p2Type)) {
+						return false;
+					}
+				} else {
+					return false;
+				}
 			}
 		}
 		return true;
