@@ -5,3 +5,4 @@
 target/*
 FeatureExtractor.iml
 /target/
+/data/
