@@ -15,6 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -89,7 +90,7 @@ public class RefInfoHandler {
 		return key;
 	}
 	
-	public RefInfoHandler (File refactoring, String projectName, REF_TYPE refType) throws FileNotFoundException {
+	public RefInfoHandler (File refactoring, String projectName, REF_TYPE refType) throws FileNotFoundException, ParseProblemException {
 		this.originalFile = refactoring;
 		this.projectName = projectName;
 		this.type = refType;
@@ -144,7 +145,7 @@ public class RefInfoHandler {
 		}
 	}
 	
-	protected void parseOriginalFile() {
+	protected void parseOriginalFile() throws ParseProblemException {
 		String matchedFilePath = this.matchFilePath(this.originalClassNameWithPkg);
 		String originalFilePath = App.getDataRoot() + "src_code/before/" + this.getCommitId() + "/" + matchedFilePath;
 		File originalFile = new File(originalFilePath);

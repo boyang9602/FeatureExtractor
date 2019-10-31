@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import com.github.javaparser.ParseProblemException;
+
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.RefInfoHandler;
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.RefInfoHandler.REF_TYPE;
 
@@ -36,6 +38,9 @@ public class App
 				} catch (FileNotFoundException e) {
 					e.printStackTrace();
 					System.out.println(refactoring.getAbsolutePath() + " does not exist");
+				} catch (ParseProblemException e) {
+					e.printStackTrace();
+					System.out.println(refactoring.getAbsolutePath() + " parse error");
 				}
 			}
 		}
