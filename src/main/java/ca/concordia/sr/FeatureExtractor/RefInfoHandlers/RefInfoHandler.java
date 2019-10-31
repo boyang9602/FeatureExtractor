@@ -40,6 +40,7 @@ public class RefInfoHandler {
 	private JSONObject jObj;
 	private String projectName;
 	private Set<String> paths = new HashSet<String>();
+	private Set<String> rightSidePaths = new HashSet<String>();
 	private String commitId;
 	protected String originalClassNameWithPkg;
 	protected CompilationUnit originalClassAST;
@@ -143,6 +144,10 @@ public class RefInfoHandler {
 		for (Object codeElement : originalCodeElements) {
 			this.paths.add(((JSONObject) codeElement).getString("filePath"));
 		}
+		originalCodeElements = jObj.getJSONArray("rightSideLocations");
+		for (Object codeElement : originalCodeElements) {
+			this.rightSidePaths.add(((JSONObject) codeElement).getString("filePath"));
+		}
 	}
 	
 	protected void parseOriginalFile() throws ParseProblemException {
@@ -157,10 +162,19 @@ public class RefInfoHandler {
 		}
 	}
 	
-	public String matchFilePath(final String classNameWithPkg) {
+	public String matchFilePath(final String classNameWithPkg) throws RuntimeException {
 		if (paths.size() == 1) {
 			return paths.iterator().next();
 		}
+		
+		if (this.type == REF_TYPE.EXTRACT_VARIABLE) {
+			return matchFilePath(classNameWithPkg, rightSidePaths);
+		} else {
+			return matchFilePath(classNameWithPkg, paths);
+		}
+	}
+	
+	private String matchFilePath(final String classNameWithPkg, Set<String> paths) {
 		for(String path : paths) {
 			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(classNameWithPkg)) {
 				return path;
@@ -169,10 +183,19 @@ public class RefInfoHandler {
 		
 		// for inner class
 		for(String path : paths) {
-			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(classNameWithPkg.substring(0, classNameWithPkg.lastIndexOf('.')))) {
-				return path;
-			}
+			String outerClass = classNameWithPkg;
+			do {
+				int lastDot = outerClass.lastIndexOf('.');
+				if (lastDot == -1) {
+					break;
+				}
+				outerClass = outerClass.substring(0, lastDot);
+				if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(outerClass)) {
+					return path;
+				}
+			} while (true);
 		}
+		
 		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.originalFile.getAbsolutePath());
 	}
 	
@@ -193,7 +216,11 @@ public class RefInfoHandler {
 				if (parameters.equals(this.methodSignature.getParameters())) {
 					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
 					amv.visitPreOrder(node);
-					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
+					try {
+						amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
+					} catch (RuntimeException e) {
+						System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
+					}
 				}
 			}
 		}

@@ -244,9 +244,14 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		for (String token : this.methodTokens) {
 			sb.append(token).append(",");
 		}
-		writer.write(sb.deleteCharAt(sb.length() - 1).append('\n').toString());
-		writer.flush();
-		writer.close();
+		if (sb.length() > 0) {
+			writer.write(sb.deleteCharAt(sb.length() - 1).append('\n').toString());
+			writer.flush();
+			writer.close();
+		} else {
+			writer.close();
+			throw new RuntimeException("No abstracted tokens");
+		}
 	}
 
 }
