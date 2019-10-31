@@ -1,5 +1,6 @@
 package ca.concordia.sr.FeatureExtractor.Visitor;
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -236,7 +237,9 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	}
 	
 	public void onFinish(String path) throws IOException {
-		FileWriter writer = new FileWriter(path, true);
+		File f = new File(path);
+		f.getParentFile().mkdirs();
+		FileWriter writer = new FileWriter(f, true);
 		StringBuilder sb = new StringBuilder();
 		for (String token : this.methodTokens) {
 			sb.append(token).append(",");
