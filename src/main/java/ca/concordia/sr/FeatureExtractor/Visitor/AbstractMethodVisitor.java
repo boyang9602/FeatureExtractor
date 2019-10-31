@@ -1,5 +1,7 @@
 package ca.concordia.sr.FeatureExtractor.Visitor;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -170,9 +172,9 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		} else if (stmt instanceof DoStmt) {
 			return "DO";
 		} else if (stmt instanceof ForStmt) {
-			return "FORLOOP";
+			return "FOR";
 		} else if (stmt instanceof ForEachStmt) {
-			return "FOREACHLOOP";
+			return "FOREACH";
 		} else if (stmt instanceof WhileStmt) {
 			return "WHILE";
 		} else if (stmt instanceof SwitchStmt) {
@@ -233,9 +235,15 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		return list.size() - 1;
 	}
 	
-	public void onFinish() {
-		// TODO: write to file
-		System.out.println(this.methodTokens);
+	public void onFinish() throws IOException {
+		FileWriter writer = new FileWriter("data/tokenized_method.csv", true);
+		StringBuilder sb = new StringBuilder();
+		for (String token : this.methodTokens) {
+			sb.append(token).append(",");
+		}
+		writer.write(sb.deleteCharAt(sb.length() - 1).append('\n').toString());
+		writer.flush();
+		writer.close();
 	}
 
 }

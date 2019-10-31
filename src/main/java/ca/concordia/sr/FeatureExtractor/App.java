@@ -2,6 +2,7 @@ package ca.concordia.sr.FeatureExtractor;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.RefInfoHandler;
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.RefInfoHandler.REF_TYPE;
@@ -16,7 +17,7 @@ public class App
 	public final static String getDataRoot() {
 		return App.dataRoot;
 	}
-    public static void main( String[] args )
+    public static void main( String[] args ) throws IOException
     {
     	App.dataRoot = args[0];
     	handleEach(new File(dataRoot + "ref_infos/Extract_Method/"), REF_TYPE.EXTRACT_METHOD);
@@ -26,7 +27,7 @@ public class App
     	handleEach(new File(dataRoot + "ref_infos/Inline_Variable/"), REF_TYPE.INLINE_VARIABLE);
     }
     
-    public static void handleEach(File refTypeFolder, REF_TYPE refType) {
+    public static void handleEach(File refTypeFolder, REF_TYPE refType) throws IOException {
 		for (File project : refTypeFolder.listFiles()) {
 			for (File refactoring : project.listFiles()) {
 				try {

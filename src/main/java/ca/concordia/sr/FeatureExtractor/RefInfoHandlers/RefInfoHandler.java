@@ -166,7 +166,7 @@ public class RefInfoHandler {
 		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.originalFile.getAbsolutePath());
 	}
 	
-	public void handle() {
+	public void handle() throws IOException {
 		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
 				NodeList<Parameter> parameters = node.getParameters();
