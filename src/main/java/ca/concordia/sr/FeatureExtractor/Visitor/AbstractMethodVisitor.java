@@ -120,7 +120,7 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		} else if (expr instanceof MethodCallExpr) {
 			MethodCallExpr mce = (MethodCallExpr) expr;
 			Node head = mce.getChildNodes().get(0);
-			String methodStr = mce.getName().getIdentifier() + mce.getArguments().toString();
+			String methodStr = mce.getName().getIdentifier() + mce.getArguments().size();
 			if (head instanceof NameExpr) {
 				String callerName = ((NameExpr) head).getName().getIdentifier();
 				if (callerName == "this") {
