@@ -205,7 +205,7 @@ public class RefInfoHandler {
 	public void handle() throws IOException {
 		boolean result = handleNormalMethod() || handleConstructor();
 		if (!result) {
-			System.out.println(this.originalFile.getAbsolutePath() + " did not match the method");
+			System.out.println(this.originalFile.getAbsolutePath() + " cannot match the method");
 		}
 	}
 	
@@ -272,19 +272,14 @@ public class RefInfoHandler {
 		while(i1.hasNext()) {
 			String[] p1 = i1.next();
 			Parameter p2 = i2.next();
-			String p1Type = p1[0].replaceAll("\\s", "");
+			String p1Type = p1[0].replaceAll("\\s", "").replaceAll("\\.\\.\\.", "");// String..., java parser does not include the ...
 			String p2Type = p2.getTypeAsString().replaceAll("\\s", "");
-			
+			int dotIndex = p2Type.lastIndexOf('.');
+			if(dotIndex != -1) {
+				p2Type = p2Type.substring(dotIndex + 1);
+			}
 			if (!p1Type.equals(p2Type)) {
-				// String..., java parser does not include the ...
-				int dotsIndex = p1Type.lastIndexOf("...");
-				if (dotsIndex != -1) {
-					if (!p1Type.substring(0, dotsIndex).equals(p2Type)) {
-						return false;
-					}
-				} else {
-					return false;
-				}
+				return false;
 			}
 		}
 		return true;
