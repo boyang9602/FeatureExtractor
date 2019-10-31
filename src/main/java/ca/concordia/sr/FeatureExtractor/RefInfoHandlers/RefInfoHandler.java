@@ -15,11 +15,10 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.github.javaparser.Range;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
-import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 
@@ -125,8 +124,17 @@ public class RefInfoHandler {
 			methodReturnType = methodSigJObj.getString("return type");
 		} catch (JSONException e) {
 		}
+		
+		int minStart = 999999999;
+		int maxEnd = 0;
+		for (Object leftSideLocation : this.getjObj().getJSONArray("leftSideLocations")) {
+			int curStart = ((JSONObject)leftSideLocation).getInt("startLine");
+			int curEnd = ((JSONObject)leftSideLocation).getInt("endLine");
+			if (curStart < minStart) minStart = curStart;
+			if (curEnd > maxEnd) maxEnd = curEnd;
+		}
 		this.methodSignature = new MethodSignature(methodName, methodVisibility, 
-				methodReturnType, isAbstract, parameters);
+				methodReturnType, isAbstract, parameters, minStart, maxEnd);
 	}
 	
 	private void computeAllPaths() {
@@ -177,15 +185,9 @@ public class RefInfoHandler {
 				if (!isEqual(this.methodSignature.getParameters(), parameters)) {
 					continue;
 				}
-				if (!this.methodSignature.is_abstract() && node.getBody().toString().equals("Optional.empty")) {
+				Range range = node.getRange().get();
+				if (!this.methodSignature.isRangeIncludedOrIntersectted(range.begin.line, range.end.line)) {
 					continue;
-				}
-				Node parent = node.getParentNode().get();
-				if (parent instanceof ClassOrInterfaceDeclaration) {
-					if (!((ClassOrInterfaceDeclaration) parent).getName().toString().equals(
-							this.originalClassNameWithPkg.substring(this.originalClassNameWithPkg.lastIndexOf('.') + 1))) {
-						continue;
-					}
 				}
 				if (parameters.equals(this.methodSignature.getParameters())) {
 					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);
