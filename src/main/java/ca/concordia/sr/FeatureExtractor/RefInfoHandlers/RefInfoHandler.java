@@ -17,7 +17,9 @@ import org.json.JSONObject;
 
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
+import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
+import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 
@@ -177,6 +179,13 @@ public class RefInfoHandler {
 				}
 				if (!this.methodSignature.is_abstract() && node.getBody().toString().equals("Optional.empty")) {
 					continue;
+				}
+				Node parent = node.getParentNode().get();
+				if (parent instanceof ClassOrInterfaceDeclaration) {
+					if (!((ClassOrInterfaceDeclaration) parent).getName().toString().equals(
+							this.originalClassNameWithPkg.substring(this.originalClassNameWithPkg.lastIndexOf('.') + 1))) {
+						continue;
+					}
 				}
 				if (parameters.equals(this.methodSignature.getParameters())) {
 					AbstractMethodVisitor amv = new AbstractMethodVisitor(node);

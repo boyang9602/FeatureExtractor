@@ -20,6 +20,7 @@ public class App
     public static void main( String[] args ) throws IOException
     {
     	App.dataRoot = args[0];
+    	// new RefInfoHandler(new File("/home/bo/eclipse-workspace/RefactoringDetector/data/ref_infos/Extract_Method/hadoop/1813.json"), "hadoop", REF_TYPE.EXTRACT_METHOD).handle();
     	handleEach(new File(dataRoot + "ref_infos/Extract_Method/"), REF_TYPE.EXTRACT_METHOD);
     	handleEach(new File(dataRoot + "ref_infos/Extract_And_Move_Method/"), REF_TYPE.EXTRACT_AND_MOVE_METHOD);
     	handleEach(new File(dataRoot + "ref_infos/Move_Method/"), REF_TYPE.MOVE_METHOD);
