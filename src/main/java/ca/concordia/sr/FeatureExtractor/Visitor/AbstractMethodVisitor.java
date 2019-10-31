@@ -5,6 +5,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
+
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
@@ -27,13 +29,31 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	Map<String, List<String>> fieldMethodMap = new HashMap<String, List<String>>(); // do not differentiate field method and static method
 	List<String> thisMethodList = new ArrayList<String>();
 	
+	Stack<String> blockStack = new Stack<String>();
+	
 	Map<String, Integer> stmtIdMap = new HashMap<String, Integer>();
 	
 	List<String> methodTokens = new LinkedList<String>();
 	private int anonyClassOverrideCounts = 0;
+	private int returnCount = 0;
+	private int localClassCount = 0;
 	
 	public AbstractMethodVisitor(final MethodDeclaration node) {
 		this.originalNode = node;
+	}
+
+	@Override
+	public void visitPreOrder(Node node) {
+		String blockKind = blockKind(node);
+        process(node);
+        if (blockKind != null) {
+        	blockStack.push(blockKind);
+        	methodTokens.add(tokenizeBlockStack());
+        }
+        new ArrayList<>(node.getChildNodes()).forEach(this::visitPreOrder);
+        if (blockKind != null) {
+        	blockStack.pop();
+        }
 	}
 	
 	/*
@@ -65,14 +85,6 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		} else if (node instanceof Expression) {
 			exprHandler((Expression) node);
 		}
-	}
-	
-	/*
-	 * handle the code block in a method, return the abstracted statement,
-	 * e.g. WHILE.IF.STMT, or much more details, WHILE.IF.STMT.PARAM.LOCAL, etc.
-	 */
-	private String computeNestedBlock(Node node) {
-		return "";
 	}
 	
 	private void exprHandler(Expression expr) {
@@ -152,8 +164,48 @@ public class AbstractMethodVisitor extends TreeVisitor {
 		// Unary & Binary
 	}
 	
+	private String blockKind(Node stmt) {
+		if (stmt instanceof TryStmt) {
+			return "TRY";
+		} else if (stmt instanceof DoStmt) {
+			return "DO";
+		} else if (stmt instanceof ForStmt) {
+			return "FORLOOP";
+		} else if (stmt instanceof ForEachStmt) {
+			return "FOREACHLOOP";
+		} else if (stmt instanceof WhileStmt) {
+			return "WHILE";
+		} else if (stmt instanceof SwitchStmt) {
+			return "SWITCH";
+		} else if (stmt instanceof IfStmt) {
+			return "IF";
+		} else if (stmt instanceof CatchClause) {
+			return "CATCH";
+		} else if (stmt instanceof SynchronizedStmt) {
+			return "SYNCHRONIZED";
+		}
+		return null;
+	}
+	
 	private void stmtHandler(Statement stmt) {
-		
+		if (stmt instanceof ThrowStmt) {
+			methodTokens.add("THROW");
+		} else if (stmt instanceof LocalClassDeclarationStmt) {
+			methodTokens.add("LOCALCLASSDECLARATION" + localClassCount++);
+		} else if (stmt instanceof ReturnStmt) {
+			methodTokens.add("RETURN" + returnCount++);
+		} else if (stmt instanceof YieldStmt) {
+			methodTokens.add("YIELD");
+		} 
+	}
+	
+	private String tokenizeBlockStack() {
+		StringBuilder sb = new StringBuilder();
+		for (String block : this.blockStack) {
+			sb.append(block);
+			sb.append(".");
+		}
+		return sb.substring(0, sb.length() - 1);
 	}
 	
 	private void addVarToTokenList(String varName, String expl) {
