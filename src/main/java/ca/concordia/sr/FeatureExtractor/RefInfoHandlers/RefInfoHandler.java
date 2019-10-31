@@ -100,7 +100,11 @@ public class RefInfoHandler {
 		try {
 			String content = bReader.readLine();
 			bReader.close();
-			jObj = new JSONObject(content);
+			try {
+				jObj = new JSONObject(content);
+			} catch (JSONException e) {
+				System.out.println("unparsable json: " + this.originalFile.getAbsolutePath());
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.out.println("Read file error: " + refactoring.getAbsolutePath() + " " + refactoring.getName());
@@ -150,16 +154,11 @@ public class RefInfoHandler {
 		}
 	}
 	
-	protected void parseOriginalFile() throws ParseProblemException {
+	protected void parseOriginalFile() throws ParseProblemException, FileNotFoundException {
 		String matchedFilePath = this.matchFilePath(this.originalClassNameWithPkg);
 		String originalFilePath = App.getDataRoot() + "src_code/before/" + this.getCommitId() + "/" + matchedFilePath;
 		File originalFile = new File(originalFilePath);
-		try {
-			this.originalClassAST = StaticJavaParser.parse(originalFile);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			System.out.println("cannot find file: " + originalFilePath);
-		}
+		this.originalClassAST = StaticJavaParser.parse(originalFile);
 	}
 	
 	public String matchFilePath(final String classNameWithPkg) throws RuntimeException {
