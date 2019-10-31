@@ -77,85 +77,24 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	
 	private void exprHandler(Expression expr) {
 		if (expr instanceof ArrayAccessExpr) {
-			String varName = expr.getChildNodes().get(0).toString();
-			int nameId = paramList.indexOf(varName);
-			if (nameId != -1) {
-				methodTokens.add("PARAM" + nameId + ".USE");
-			} else {
-				nameId = localList.indexOf(varName);
-				if (nameId != -1) {
-					methodTokens.add("LOCALVAR" + nameId + ".USE");
-				} else {
-					nameId = insertToListIfNotExist(fieldList, varName);
-					methodTokens.add("FIELD" + nameId + ".USE");
-				}
-			}
-			
+			addVarToTokenList(expr.getChildNodes().get(0).toString(), "USE");			
 		} else if (expr instanceof ArrayInitializerExpr) {
 			for (Node node : expr.getChildNodes()) {
 				if (node instanceof NameExpr) {
-					String varName = node.toString();
-					int nameId = paramList.indexOf(varName);
-					if (nameId != -1) {
-						methodTokens.add("PARAM" + nameId + ".USE");
-					} else {
-						nameId = localList.indexOf(varName);
-						if (nameId != -1) {
-							methodTokens.add("LOCALVAR" + nameId + ".USE");
-						} else {
-							nameId = insertToListIfNotExist(fieldList, varName);
-							methodTokens.add("FIELD" + nameId + ".USE");
-						}
-					}
+					addVarToTokenList(node.toString(), "USE");
 				}
 			}
 		} else if (expr instanceof AssignExpr) {
-			String varName = expr.getChildNodes().get(0).toString();
-			int nameId = paramList.indexOf(varName);
-			if (nameId != -1) {
-				methodTokens.add("PARAM" + nameId + ".ASSIGN");
-			} else {
-				nameId = localList.indexOf(varName);
-				if (nameId != -1) {
-					methodTokens.add("LOCALVAR" + nameId + ".ASSIGN");
-				} else {
-					nameId = insertToListIfNotExist(fieldList, varName);
-					methodTokens.add("FIELD" + nameId + ".ASSIGN");
-				}
-			}
+			addVarToTokenList(expr.getChildNodes().get(0).toString(), "ASSIGN");
 		} else if (expr instanceof CastExpr) {
 			Node varToBeCast = expr.getChildNodes().get(1);
 			if (varToBeCast instanceof NameExpr) {
-				String varName = varToBeCast.toString();
-				int nameId = paramList.indexOf(varName);
-				if (nameId != -1) {
-					methodTokens.add("PARAM" + nameId + ".CAST");
-				} else {
-					nameId = localList.indexOf(varName);
-					if (nameId != -1) {
-						methodTokens.add("LOCALVAR" + nameId + ".CAST");
-					} else {
-						nameId = insertToListIfNotExist(fieldList, varName);
-						methodTokens.add("FIELD" + nameId + ".CAST");
-					}
-				}
+				addVarToTokenList(varToBeCast.toString(), "CAST");
 			}
 		} else if (expr instanceof InstanceOfExpr) {
 			Node varToCheck = expr.getChildNodes().get(0);
 			if (varToCheck instanceof NameExpr) {
-				String varName = varToCheck.toString();
-				int nameId = paramList.indexOf(varName);
-				if (nameId != -1) {
-					methodTokens.add("PARAM" + nameId + ".INSTOF");
-				} else {
-					nameId = localList.indexOf(varName);
-					if (nameId != -1) {
-						methodTokens.add("LOCALVAR" + nameId + ".INSTOF");
-					} else {
-						nameId = insertToListIfNotExist(fieldList, varName);
-						methodTokens.add("FIELD" + nameId + ".INSTOF");
-					}
-				}
+				addVarToTokenList(varToCheck.toString(), "INSTOF");
 			}
 		} else if (expr instanceof LiteralExpr) {
 			int nameId = insertToListIfNotExist(constList, expr.getClass().toString() + expr.toString());
@@ -215,6 +154,21 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	
 	private void stmtHandler(Statement stmt) {
 		
+	}
+	
+	private void addVarToTokenList(String varName, String expl) {
+		int nameId = paramList.indexOf(varName);
+		if (nameId != -1) {
+			methodTokens.add("PARAM" + nameId + "." + expl);
+		} else {
+			nameId = localList.indexOf(varName);
+			if (nameId != -1) {
+				methodTokens.add("LOCALVAR" + nameId + "." + expl);
+			} else {
+				nameId = insertToListIfNotExist(fieldList, varName);
+				methodTokens.add("FIELD" + nameId + "." + expl);
+			}
+		}
 	}
 	
 	private int insertToListIfNotExist(List<String> list, String str) {
