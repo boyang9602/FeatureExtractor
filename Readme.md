@@ -30,4 +30,5 @@ Abstraction:
 The grandularity is tunable by simply changing the code. For example, you may only consider about the `variable`'s source but don't care about which one is used, then you can remove the `id` number of the `variable` simply. Also, it's very easy to record whether a `variable` is inside a (nested) block statement like `IF` or `TRY`, etc. If only nested structure is important but what type of the block is not important, it's also easy to turn the `keyword` into a general one (e.g. `BLOCK.BLOCK.BLOCK`). And other things the combination of the different source of `variable`, the parameter of the `METHOD` call, etc. are also easy to be recorded.  
 
 ### TODOs:
-1. Cannot find the method information before extract variable refactoring.
+1. Cannot find the method information before extract variable refactoring.  
+The reason is clear now: `extract variable` and `move method/extract method/move class/etc.` may be combined, so the original method information are in those refactoring information. It is solved for the cases that are not combined with other refactorings.   
