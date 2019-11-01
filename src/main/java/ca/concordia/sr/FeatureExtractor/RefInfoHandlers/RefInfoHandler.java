@@ -134,7 +134,9 @@ public class RefInfoHandler {
 		
 		int minStart = 999999999;
 		int maxEnd = 0;
-		for (Object leftSideLocation : this.getjObj().getJSONArray("leftSideLocations")) {
+		
+		String side = this.type == REF_TYPE.EXTRACT_VARIABLE? "rightSideLocations" : "leftSideLocations";
+		for (Object leftSideLocation : this.getjObj().getJSONArray(side)) {
 			int curStart = ((JSONObject)leftSideLocation).getInt("startLine");
 			int curEnd = ((JSONObject)leftSideLocation).getInt("endLine");
 			if (curStart < minStart) minStart = curStart;
