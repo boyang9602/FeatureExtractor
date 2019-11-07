@@ -2,7 +2,7 @@
 
 Extract code features from source code files. Need to specify data root path for `main` method. data folder sturcture please refer to [RefactoringDetector](https://github.com/boyang9602/RefactoringDetector)  
 
-[data](./data)  
+The extracted features are under the [data](./data) folder in this repo  
 #### In the abstraction, we
 1. record the different sources of `variable` which are `PARAM`, `LOCALVAR`, `FIELD`.  
 2. differentiate the different `variable` and `method` by an id number. e.g. `PARAM0`, `METHOD1`, etc.  
