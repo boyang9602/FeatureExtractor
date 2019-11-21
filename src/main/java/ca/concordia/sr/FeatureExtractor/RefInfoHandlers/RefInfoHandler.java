@@ -27,6 +27,7 @@ import com.github.javaparser.ast.body.Parameter;
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
 import ca.concordia.sr.FeatureExtractor.Visitor.AbstractMethodVisitor;
+import ca.concordia.sr.FeatureExtractor.utils.FileHelper;
 
 public class RefInfoHandler {
 	public enum REF_TYPE {
@@ -96,19 +97,11 @@ public class RefInfoHandler {
 		this.originalFile = refactoring;
 		this.projectName = projectName;
 		this.type = refType;
-		FileReader reader = new FileReader(refactoring);
-		BufferedReader bReader = new BufferedReader(reader, 10240);
+		String content = FileHelper.getFileContent(refactoring.getAbsolutePath());
 		try {
-			String content = bReader.readLine();
-			bReader.close();
-			try {
-				jObj = new JSONObject(content);
-			} catch (JSONException e) {
-				System.out.println("unparsable json: " + this.originalFile.getAbsolutePath());
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.out.println("Read file error: " + refactoring.getAbsolutePath() + " " + refactoring.getName());
+			jObj = new JSONObject(content);
+		} catch (JSONException e) {
+			System.out.println("unparsable json: " + this.originalFile.getAbsolutePath());
 		}
 		this.commitId = jObj.getString("commitId");
 		this.computeAllPaths();
