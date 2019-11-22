@@ -1,8 +1,10 @@
 package ca.concordia.sr.FeatureExtractor.utils;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 
 public class FileHelper {
@@ -23,6 +25,15 @@ public class FileHelper {
 		}
 		
 		return sb.toString();
+	}
+	
+	public static void writeFileContent(String path, String content, boolean append) throws IOException {
+		File f = new File(path);
+		f.getParentFile().mkdirs();
+		FileWriter writer = new FileWriter(f, append);
+		writer.write(content);
+		writer.flush();
+		writer.close();
 	}
 
 }

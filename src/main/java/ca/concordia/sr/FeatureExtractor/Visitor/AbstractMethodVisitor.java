@@ -1,7 +1,5 @@
 package ca.concordia.sr.FeatureExtractor.Visitor;
 
-import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,8 +17,11 @@ import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
 import com.github.javaparser.ast.visitor.TreeVisitor;
 
+import ca.concordia.sr.FeatureExtractor.utils.FileHelper;
+
 // Abstract is a verb here
 public class AbstractMethodVisitor extends TreeVisitor {
+	@SuppressWarnings("rawtypes")
 	private final CallableDeclaration originalNode;
 	List<String> paramList = new ArrayList<String>();
 	List<String> localList = new ArrayList<String>();
@@ -42,7 +43,7 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	private int returnCount = 0;
 	private int localClassCount = 0;
 	
-	public AbstractMethodVisitor(final CallableDeclaration node) {
+	public AbstractMethodVisitor(@SuppressWarnings("rawtypes") final CallableDeclaration node) {
 		this.originalNode = node;
 	}
 
@@ -238,19 +239,10 @@ public class AbstractMethodVisitor extends TreeVisitor {
 	}
 	
 	public void onFinish(String path) throws IOException {
-		File f = new File(path);
-		f.getParentFile().mkdirs();
-		FileWriter writer = new FileWriter(f, true);
-		StringBuilder sb = new StringBuilder();
-		for (String token : this.methodTokens) {
-			sb.append(token).append(",");
-		}
-		if (sb.length() > 0) {
-			writer.write(sb.deleteCharAt(sb.length() - 1).append('\n').toString());
-			writer.flush();
-			writer.close();
+		String toWrite = String.join(",", this.methodTokens);
+		if (toWrite.length() > 0) {
+			FileHelper.writeFileContent(path, toWrite + "\n", true);
 		} else {
-			writer.close();
 			throw new RuntimeException("No abstracted tokens");
 		}
 	}

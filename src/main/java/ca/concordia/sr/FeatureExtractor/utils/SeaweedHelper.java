@@ -18,8 +18,9 @@ public class SeaweedHelper {
 		HttpGet req = new HttpGet(String.format("%s%s/?lastFileName=%s&limit=%d", host, path, lastFileName, perPage));
 		req.setHeader(HttpHeaders.ACCEPT, "application/json");
 		CloseableHttpResponse resp = httpClient.execute(req);
-		
-		return new JSONObject(EntityUtils.toString(resp.getEntity()));
+		JSONObject body = new JSONObject(EntityUtils.toString(resp.getEntity()));
+		resp.close();
+		return body;
 	}
 	public static String getFileContent(String host, String fullPath) throws ClientProtocolException, IOException {
 		HttpGet req = new HttpGet(host + fullPath);
