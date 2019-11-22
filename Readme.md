@@ -1,5 +1,8 @@
 # FeatureExtractor
 
+### WHAT'S NEW?
+Due to the millions of small file, used [seaweed](https://github.com/chrislusf/seaweedfs). Both file system and seaweed filer are supported.
+
 Extract code features from source code files. Need to specify data root path for `main` method. data folder sturcture please refer to [RefactoringDetector](https://github.com/boyang9602/RefactoringDetector)  
 
 The extracted features are under the [data](./data) folder in this repo  
