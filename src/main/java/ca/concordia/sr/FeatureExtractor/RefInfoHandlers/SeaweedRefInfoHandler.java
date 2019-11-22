@@ -3,32 +3,29 @@ package ca.concordia.sr.FeatureExtractor.RefInfoHandlers;
 import java.io.IOException;
 
 import org.apache.http.client.ClientProtocolException;
-import org.json.JSONException;
 import com.github.javaparser.ParseProblemException;
 
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.utils.SeaweedHelper;
 
 public class SeaweedRefInfoHandler extends RefInfoHandler {
-	private String seaweedUri;
-	
-	public SeaweedRefInfoHandler (String seaweedUri, String projectName, REF_TYPE refType) throws ParseProblemException, JSONException, ClientProtocolException, IOException {
-		super(projectName, refType);
-		this.seaweedUri = seaweedUri;
+	public SeaweedRefInfoHandler(String seaweedUri, String projectName, REF_TYPE refType)
+			throws ParseProblemException, ClientProtocolException, IOException {
+		super(seaweedUri, projectName, refType);
 	}
 
 	@Override
 	protected String refInfoLocation() {
-		return "seaweed: " + App.seaweedhost + this.seaweedUri;
+		return "seaweed: " + App.seaweedhost + this.getUri();
 	}
 
 	@Override
 	protected String getRefInfo() throws ClientProtocolException, IOException {
-		return SeaweedHelper.getFileContent(App.seaweedhost, seaweedUri);
+		return SeaweedHelper.getFileContent(App.seaweedhost, this.getUri());
 	}
 
 	@Override
 	protected String getSrcCode(String path) throws ClientProtocolException, IOException {
-		return SeaweedHelper.getFileContent(App.seaweedhost, path);
+		return SeaweedHelper.getFileContent(App.seaweedhost, "/srdata/" + path);
 	}
 }

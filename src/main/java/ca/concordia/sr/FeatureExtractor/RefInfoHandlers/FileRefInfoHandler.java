@@ -4,28 +4,26 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.apache.http.client.ClientProtocolException;
-import org.json.JSONException;
-
 import com.github.javaparser.ParseProblemException;
 
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.utils.FileHelper;
 
 public class FileRefInfoHandler extends RefInfoHandler {
-	private String filepath;
-	public FileRefInfoHandler (String filepath, String projectName, REF_TYPE refType) throws ParseProblemException, JSONException, ClientProtocolException, IOException {
-		super(projectName, refType);
-		this.filepath = filepath;
+
+	public FileRefInfoHandler(String filepath, String projectName, REF_TYPE refType)
+			throws ParseProblemException, ClientProtocolException, IOException {
+		super(filepath, projectName, refType);
 	}
 
 	@Override
 	protected String refInfoLocation() {
-		return "file: " + filepath;
+		return "file: " + this.getUri();
 	}
 
 	@Override
 	protected String getRefInfo() throws FileNotFoundException {
-		return FileHelper.getFileContent(filepath);
+		return FileHelper.getFileContent(this.getUri());
 	}
 
 	@Override

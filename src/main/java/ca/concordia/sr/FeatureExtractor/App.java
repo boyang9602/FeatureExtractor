@@ -8,6 +8,7 @@ import com.github.javaparser.ParseProblemException;
 
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.FileRefInfoHandler;
 import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.RefInfoHandler.REF_TYPE;
+import ca.concordia.sr.FeatureExtractor.RefInfoHandlers.SeaweedRefInfoHandler;
 
 /**
  * Hello world!
@@ -29,6 +30,7 @@ public class App
 //    	handleEach(new File(dataRoot + "ref_infos/Move_Method/"), REF_TYPE.MOVE_METHOD);
 //    	handleEach(new File(dataRoot + "ref_infos/Extract_Variable/"), REF_TYPE.EXTRACT_VARIABLE);
 //    	handleEach(new File(dataRoot + "ref_infos/Inline_Variable/"), REF_TYPE.INLINE_VARIABLE);
+    	new SeaweedRefInfoHandler("/srdata/ref_infos/Extract_Method/elasticsearch/0.json", "Accumulo", REF_TYPE.EXTRACT_METHOD);
     	
     }
     

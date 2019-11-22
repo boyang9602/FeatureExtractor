@@ -34,6 +34,7 @@ public abstract class RefInfoHandler {
 		INLINE_VARIABLE
 	}
 
+	private String uri;
 	private JSONObject refInfoJson;
 	private String projectName;
 	private Set<String> paths = new HashSet<String>();
@@ -56,6 +57,9 @@ public abstract class RefInfoHandler {
 	}
 	public String getCommitId() {
 		return commitId;
+	}
+	public String getUri() {
+		return uri;
 	}
 	
 	private String getMethodBeforeKey() {
@@ -92,9 +96,10 @@ public abstract class RefInfoHandler {
 		return key;
 	}
 
-	public RefInfoHandler (String projectName, REF_TYPE refType) throws ParseProblemException, ClientProtocolException, IOException {
+	public RefInfoHandler (String uri, String projectName, REF_TYPE refType) throws ParseProblemException, ClientProtocolException, IOException {
 		this.projectName = projectName;
 		this.type = refType;
+		this.uri = uri;
 		try {
 			this.refInfoJson = new JSONObject(this.getRefInfo());
 		} catch (JSONException e) {
