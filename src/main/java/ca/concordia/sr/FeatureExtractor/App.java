@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.http.client.ClientProtocolException;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -38,8 +39,9 @@ public class App
     	refTypes.put("Move_Method", REF_TYPE.MOVE_METHOD);
     	refTypes.put("Extract_Variable", REF_TYPE.EXTRACT_VARIABLE);
     	refTypes.put("Inline_Variable", REF_TYPE.INLINE_VARIABLE);
-    	String[] projects = {"accumulo", "elasticsearch", "fastjson", "hadoop", "hive", "jenkins", 
-    			"junit", "kafka", "logstash", "spring-framework"};
+    	//String[] projects = {"accumulo", "elasticsearch", "fastjson", "hadoop", "hive", "jenkins", 
+    	//		"junit", "kafka", "logstash", "spring-framework"};
+    	String[] projects = {"kafka"};
     	handleEachInSeaweed(projects, refTypes);
     	// new RefInfoHandler(new File("/home/bo/eclipse-workspace/RefactoringDetector/data/ref_infos/Move_Method/hive/325.json"), "hadoop", REF_TYPE.MOVE_METHOD).handle();
     	// new SeaweedRefInfoHandler("/srdata/ref_infos/Extract_Method/elasticsearch/0.json", "accumulo", REF_TYPE.EXTRACT_METHOD);
@@ -63,19 +65,22 @@ public class App
 								lastFileName, 20);
 	    				hasMore = resp.getBoolean("ShouldDisplayLoadMore");
 	    				lastFileName = resp.getString("LastFileName");
-	        			for (Object fileInfo : resp.getJSONArray("Entries")) {
-	        				try {
-								new SeaweedRefInfoHandler(((JSONObject) fileInfo).getString("FullPath"), project, refType.getValue()).handle();
-							} catch (ParseProblemException e) {
-								e.printStackTrace();
-								System.out.println("could not parse" + ((JSONObject) fileInfo).getString("FullPath"));
-							} catch (JSONException e) {
-								e.printStackTrace();
-							}
-	        			}
+	    				try {
+	    					JSONArray fileLists = resp.getJSONArray("Entries");
+		        			for (Object fileInfo : fileLists) {
+		        				try {
+									new SeaweedRefInfoHandler(((JSONObject) fileInfo).getString("FullPath"), project, refType.getValue()).handle();
+								} catch (ParseProblemException e) {
+									e.printStackTrace();
+									System.out.println("could not parse" + ((JSONObject) fileInfo).getString("FullPath"));
+								} catch (JSONException e) {
+									e.printStackTrace();
+								}
+		        			}
+	    				} catch (JSONException e) {
+	    					System.out.println("entries null");
+	    				}
 					} catch (ClientProtocolException e) {
-						e.printStackTrace();
-					} catch (JSONException e) {
 						e.printStackTrace();
 					} catch (IOException e) {
 						e.printStackTrace();
