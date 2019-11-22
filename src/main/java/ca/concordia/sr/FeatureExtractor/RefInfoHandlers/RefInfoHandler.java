@@ -1,9 +1,7 @@
 package ca.concordia.sr.FeatureExtractor.RefInfoHandlers;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -11,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.http.client.ClientProtocolException;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -27,9 +26,8 @@ import com.github.javaparser.ast.body.Parameter;
 import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
 import ca.concordia.sr.FeatureExtractor.Visitor.AbstractMethodVisitor;
-import ca.concordia.sr.FeatureExtractor.utils.FileHelper;
 
-public class RefInfoHandler {
+public abstract class RefInfoHandler {
 	public enum REF_TYPE {
 		EXTRACT_METHOD,
 		EXTRACT_AND_MOVE_METHOD,
@@ -38,19 +36,21 @@ public class RefInfoHandler {
 		INLINE_VARIABLE
 	}
 	
-	private File originalFile;
-	private JSONObject jObj;
+	private JSONObject refInfoJson;
 	private String projectName;
 	private Set<String> paths = new HashSet<String>();
 	private Set<String> rightSidePaths = new HashSet<String>();
 	private String commitId;
-	protected String originalClassNameWithPkg;
-	protected CompilationUnit originalClassAST;
+	protected String origClsNameWithPkg;
+	protected CompilationUnit origClsAST;
 	private REF_TYPE type;
 	private MethodSignature methodSignature;
+
+	abstract public String refInfoLocation();
+	abstract public String getRefInfo() throws FileNotFoundException, ClientProtocolException, IOException;
 	
-	public final JSONObject getjObj() {
-		return jObj;
+	public final JSONObject getRefInfoJson() {
+		return refInfoJson;
 	}
 	public String getProjectName() {
 		return projectName;
@@ -92,26 +92,24 @@ public class RefInfoHandler {
 		}
 		return key;
 	}
-	
-	public RefInfoHandler (File refactoring, String projectName, REF_TYPE refType) throws FileNotFoundException, ParseProblemException {
-		this.originalFile = refactoring;
+
+	public RefInfoHandler (String projectName, REF_TYPE refType) throws ParseProblemException, ClientProtocolException, IOException {
 		this.projectName = projectName;
 		this.type = refType;
-		String content = FileHelper.getFileContent(refactoring.getAbsolutePath());
 		try {
-			jObj = new JSONObject(content);
+			this.refInfoJson = new JSONObject(this.getRefInfo());
 		} catch (JSONException e) {
-			System.out.println("unparsable json: " + this.originalFile.getAbsolutePath());
+			System.out.println("json parse error: " + this.refInfoLocation());
 		}
-		this.commitId = jObj.getString("commitId");
+		this.commitId = refInfoJson.getString("commitId");
 		this.computeAllPaths();
-		this.originalClassNameWithPkg = this.getjObj().getString(this.getClassBeforeKey());
+		this.origClsNameWithPkg = refInfoJson.getString(this.getClassBeforeKey());
 		this.parseOriginalFile();
 		this.getOperatedMethod();
 	}
 	
 	public void getOperatedMethod() {
-		JSONObject methodSigJObj = this.getjObj().getJSONObject(this.getMethodBeforeKey());
+		JSONObject methodSigJObj = this.getRefInfoJson().getJSONObject(this.getMethodBeforeKey());
 		List<String> parameters = new ArrayList<String>();
 		for(Object p : methodSigJObj.getJSONArray("parameters")) {
 			parameters.add((String)p);
@@ -129,7 +127,7 @@ public class RefInfoHandler {
 		int maxEnd = 0;
 		
 		String side = this.type == REF_TYPE.EXTRACT_VARIABLE? "rightSideLocations" : "leftSideLocations";
-		for (Object leftSideLocation : this.getjObj().getJSONArray(side)) {
+		for (Object leftSideLocation : this.getRefInfoJson().getJSONArray(side)) {
 			int curStart = ((JSONObject)leftSideLocation).getInt("startLine");
 			int curEnd = ((JSONObject)leftSideLocation).getInt("endLine");
 			if (curStart < minStart) minStart = curStart;
@@ -140,21 +138,21 @@ public class RefInfoHandler {
 	}
 	
 	private void computeAllPaths() {
-		JSONArray originalCodeElements = jObj.getJSONArray("leftSideLocations");
+		JSONArray originalCodeElements = refInfoJson.getJSONArray("leftSideLocations");
 		for (Object codeElement : originalCodeElements) {
 			this.paths.add(((JSONObject) codeElement).getString("filePath"));
 		}
-		originalCodeElements = jObj.getJSONArray("rightSideLocations");
+		originalCodeElements = refInfoJson.getJSONArray("rightSideLocations");
 		for (Object codeElement : originalCodeElements) {
 			this.rightSidePaths.add(((JSONObject) codeElement).getString("filePath"));
 		}
 	}
 	
 	protected void parseOriginalFile() throws ParseProblemException, FileNotFoundException {
-		String matchedFilePath = this.matchFilePath(this.originalClassNameWithPkg);
+		String matchedFilePath = this.matchFilePath(this.origClsNameWithPkg);
 		String originalFilePath = App.getDataRoot() + "src_code/before/" + this.getCommitId() + "/" + matchedFilePath;
 		File originalFile = new File(originalFilePath);
-		this.originalClassAST = StaticJavaParser.parse(originalFile);
+		this.origClsAST = StaticJavaParser.parse(originalFile);
 	}
 	
 	public String matchFilePath(final String classNameWithPkg) throws RuntimeException {
@@ -194,18 +192,18 @@ public class RefInfoHandler {
 			} while (true);
 		}
 		
-		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.originalFile.getAbsolutePath());
+		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.refInfoLocation());
 	}
 	
 	public void handle() throws IOException {
 		boolean result = handleNormalMethod() || handleConstructor();
 		if (!result) {
-			System.out.println(this.originalFile.getAbsolutePath() + " cannot match the method");
+			System.out.println(this.refInfoLocation() + " cannot match the method");
 		}
 	}
 	
 	private boolean handleConstructor() throws IOException {
-		for(ConstructorDeclaration node : this.originalClassAST.findAll(ConstructorDeclaration.class)) {
+		for(ConstructorDeclaration node : this.origClsAST.findAll(ConstructorDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
 				NodeList<Parameter> parameters = node.getParameters();
 				if (this.methodSignature.getParameters().size() != parameters.size()) {
@@ -224,7 +222,7 @@ public class RefInfoHandler {
 					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
 					return true;
 				} catch (RuntimeException e) {
-					System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
+					System.out.println(this.refInfoLocation() + " " + e.getMessage());
 				}
 			}
 		}
@@ -232,7 +230,7 @@ public class RefInfoHandler {
 	}
 	
 	private boolean handleNormalMethod() throws IOException {
-		for(MethodDeclaration node : this.originalClassAST.findAll(MethodDeclaration.class)) {
+		for(MethodDeclaration node : this.origClsAST.findAll(MethodDeclaration.class)) {
 			if (node.getName().getIdentifier().equals(this.methodSignature.getName())) {
 				NodeList<Parameter> parameters = node.getParameters();
 				if (this.methodSignature.getParameters().size() != parameters.size()) {
@@ -251,7 +249,7 @@ public class RefInfoHandler {
 					amv.onFinish("data/" + this.projectName + "/" + this.type.toString());
 					return true;
 				} catch (RuntimeException e) {
-					System.out.println(this.originalFile.getAbsolutePath() + " " + e.getMessage());
+					System.out.println(this.refInfoLocation() + " " + e.getMessage());
 				}
 			}
 		}
