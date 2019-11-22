@@ -18,12 +18,17 @@ public class SeaweedRefInfoHandler extends RefInfoHandler {
 	}
 
 	@Override
-	public String refInfoLocation() {
+	protected String refInfoLocation() {
 		return "seaweed: " + App.seaweedhost + this.seaweedUri;
 	}
 
 	@Override
-	public String getRefInfo() throws ClientProtocolException, IOException {
+	protected String getRefInfo() throws ClientProtocolException, IOException {
 		return SeaweedHelper.getFileContent(App.seaweedhost, seaweedUri);
+	}
+
+	@Override
+	protected String getSrcCode(String path) throws ClientProtocolException, IOException {
+		return SeaweedHelper.getFileContent(App.seaweedhost, path);
 	}
 }

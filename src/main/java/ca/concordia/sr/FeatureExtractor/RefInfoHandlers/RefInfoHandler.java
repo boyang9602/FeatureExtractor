@@ -1,6 +1,5 @@
 package ca.concordia.sr.FeatureExtractor.RefInfoHandlers;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,7 +22,6 @@ import com.github.javaparser.ast.body.ConstructorDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.Parameter;
 
-import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.CodeModel.MethodSignature;
 import ca.concordia.sr.FeatureExtractor.Visitor.AbstractMethodVisitor;
 
@@ -35,7 +33,7 @@ public abstract class RefInfoHandler {
 		EXTRACT_VARIABLE,
 		INLINE_VARIABLE
 	}
-	
+
 	private JSONObject refInfoJson;
 	private String projectName;
 	private Set<String> paths = new HashSet<String>();
@@ -46,8 +44,9 @@ public abstract class RefInfoHandler {
 	private REF_TYPE type;
 	private MethodSignature methodSignature;
 
-	abstract public String refInfoLocation();
-	abstract public String getRefInfo() throws FileNotFoundException, ClientProtocolException, IOException;
+	protected abstract String refInfoLocation();
+	protected abstract String getRefInfo() throws FileNotFoundException, ClientProtocolException, IOException;
+	protected abstract String getSrcCode(String path) throws FileNotFoundException, ClientProtocolException, IOException;
 	
 	public final JSONObject getRefInfoJson() {
 		return refInfoJson;
@@ -104,11 +103,11 @@ public abstract class RefInfoHandler {
 		this.commitId = refInfoJson.getString("commitId");
 		this.computeAllPaths();
 		this.origClsNameWithPkg = refInfoJson.getString(this.getClassBeforeKey());
-		this.parseOriginalFile();
-		this.getOperatedMethod();
+		this.parseOrigFile();
+		this.setMethodSignature();
 	}
 	
-	public void getOperatedMethod() {
+	public void setMethodSignature() {
 		JSONObject methodSigJObj = this.getRefInfoJson().getJSONObject(this.getMethodBeforeKey());
 		List<String> parameters = new ArrayList<String>();
 		for(Object p : methodSigJObj.getJSONArray("parameters")) {
@@ -148,11 +147,9 @@ public abstract class RefInfoHandler {
 		}
 	}
 	
-	protected void parseOriginalFile() throws ParseProblemException, FileNotFoundException {
+	private void parseOrigFile() throws ParseProblemException, ClientProtocolException, IOException {
 		String matchedFilePath = this.matchFilePath(this.origClsNameWithPkg);
-		String originalFilePath = App.getDataRoot() + "src_code/before/" + this.getCommitId() + "/" + matchedFilePath;
-		File originalFile = new File(originalFilePath);
-		this.origClsAST = StaticJavaParser.parse(originalFile);
+		this.origClsAST = StaticJavaParser.parse(this.getSrcCode("src_code/before/" + this.getCommitId() + "/" + matchedFilePath));
 	}
 	
 	public String matchFilePath(final String classNameWithPkg) throws RuntimeException {
@@ -170,16 +167,16 @@ public abstract class RefInfoHandler {
 		}
 	}
 	
-	private String matchFilePath(final String classNameWithPkg, Set<String> paths) {
+	private String matchFilePath(final String clsNameWithPkg, Set<String> paths) {
 		for(String path : paths) {
-			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(classNameWithPkg)) {
+			if (path.substring(0, path.lastIndexOf(".java")).replace('/', '.').endsWith(clsNameWithPkg)) {
 				return path;
 			}
 		}
 		
 		// for inner class
 		for(String path : paths) {
-			String outerClass = classNameWithPkg;
+			String outerClass = clsNameWithPkg;
 			do {
 				int lastDot = outerClass.lastIndexOf('.');
 				if (lastDot == -1) {
@@ -192,7 +189,7 @@ public abstract class RefInfoHandler {
 			} while (true);
 		}
 		
-		throw new RuntimeException("cannot match any path for original class: " + classNameWithPkg + ". \nPlease check " + this.refInfoLocation());
+		throw new RuntimeException("cannot match any path for original class: " + clsNameWithPkg + ". \nPlease check " + this.refInfoLocation());
 	}
 	
 	public void handle() throws IOException {

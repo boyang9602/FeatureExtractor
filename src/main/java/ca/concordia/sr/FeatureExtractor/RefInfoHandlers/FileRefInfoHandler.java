@@ -8,6 +8,7 @@ import org.json.JSONException;
 
 import com.github.javaparser.ParseProblemException;
 
+import ca.concordia.sr.FeatureExtractor.App;
 import ca.concordia.sr.FeatureExtractor.utils.FileHelper;
 
 public class FileRefInfoHandler extends RefInfoHandler {
@@ -18,12 +19,17 @@ public class FileRefInfoHandler extends RefInfoHandler {
 	}
 
 	@Override
-	public String refInfoLocation() {
+	protected String refInfoLocation() {
 		return "file: " + filepath;
 	}
 
 	@Override
-	public String getRefInfo() throws FileNotFoundException {
+	protected String getRefInfo() throws FileNotFoundException {
 		return FileHelper.getFileContent(filepath);
+	}
+
+	@Override
+	protected String getSrcCode(String path) throws FileNotFoundException {
+		return FileHelper.getFileContent(App.getDataRoot() + path);
 	}
 }
